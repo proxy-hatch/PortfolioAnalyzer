@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "portfolio-analyzer"
+version = "0.1.0"
+description = "Yet another portfolio analyzer - analyzes Questrade data, produces metrics against benchmarks"
+authors = ["proxy-hatch"]
+license = "MIT"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+pandas = "^2.2.3"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
