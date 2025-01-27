@@ -10,6 +10,13 @@ readme = "README.md"
 python = "^3.12"
 pandas = "^2.2.3"
 
+#[tool.poetry.scripts]
+#analyze-portfolio = "src.main:start"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.3.4"
+pytest-cov = "^6.0.0"
+
 
 [build-system]
 requires = ["poetry-core"]

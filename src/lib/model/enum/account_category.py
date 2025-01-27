@@ -1,15 +1,7 @@
-from dataclasses import dataclass
-from enum import Enum
+from enum import StrEnum
 
 
-@dataclass
-class Position:
-    """Class to represent a position."""
-    quantity: float
-    price: float
-
-
-class AccountCategory(Enum):
+class AccountCategory(StrEnum):
     """Enum for account categories."""
     MARGIN = "Margin"
     TFSA_RRSP = "TFSA_RRSP"
