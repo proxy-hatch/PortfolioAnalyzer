@@ -11,8 +11,6 @@ from lib.model.enum.stage import Stage
 from lib.logger.logger import initialize_logger
 
 logger = None
-# logger = logging.getLogger(__name__)
-# logging.basicConfig(format="%(asctime)s - %(levelname)s - %(message)s")
 FILE_PATH = '../data/tst.csv'
 
 
