@@ -54,8 +54,7 @@ class CapitalGainProcessor(BaseProcessor):
         daily_realized['Realized Gain'] = 0.00
         daily_realized['Realized Loss'] = 0.00
         daily_realized_symbols = pd.DataFrame(columns=['Date', 'Symbol', 'Realized'])
-        daily_realized_symbols['Date'] = pd.date_range(start=start_date, end=end_date)
-        daily_realized_symbols['Realized'] = 0.00
+        daily_realized_symbols['Realized'] = daily_realized_symbols['Realized'].astype(float)
 
         trades = df[df['Activity Type'] == 'Trades']
 
@@ -80,13 +79,11 @@ class CapitalGainProcessor(BaseProcessor):
             elif row['Action'] == 'Sell':
                 if symbol not in positions:
                     self.logger.error(f"Sell transaction found for symbol {symbol} with no prior holdings on row {i}.")
-                    # raise ValueError(f"Sell transaction found for symbol {symbol} with no prior holdings.")
                     continue
 
                 position = positions[symbol]
                 if position.quantity < quantity:
                     self.logger.error(f"Attempting to sell more shares than available for {symbol} on row {i}.")
-                    # raise ValueError(f"Attempting to sell more shares than available for {symbol}.")
                     continue
 
                 # Reduce the position
@@ -98,13 +95,11 @@ class CapitalGainProcessor(BaseProcessor):
             if row['Action'] == 'Sell':
                 if symbol not in positions:
                     self.logger.error(f"Sell transaction found for symbol {symbol} with no prior holdings on row {i}.")
-                    # raise ValueError(f"Sell transaction found for symbol {symbol} with no prior holdings.")
                     continue
 
                 position = positions[symbol]
                 if position.quantity < quantity:
                     self.logger.error(f"Attempting to sell more shares than available for {symbol} on row {i}.")
-                    # raise ValueError(f"Attempting to sell more shares than available for {symbol}.")
                     continue
 
                 # Calculate realized gain (subtract commission from proceeds)
@@ -116,14 +111,16 @@ class CapitalGainProcessor(BaseProcessor):
 
                 if realized_gain > 0:
                     daily_realized.loc[
-                        daily_realized['Date'] == row['Date'], 'Realized Gain'] = realized_gain
+                        daily_realized['Date'] == row['Date'], 'Realized Gain'] += realized_gain
                 else:
                     daily_realized.loc[
-                        daily_realized['Date'] == row['Date'], 'Realized Loss'] = realized_gain
+                        daily_realized['Date'] == row['Date'], 'Realized Loss'] -= realized_gain
 
-                daily_realized_symbols.loc[
-                    daily_realized_symbols['Date'] == row['Date'], ['Symbol', 'Realized']
-                ] = [symbol, realized_gain]
+                daily_realized_symbols = pd.concat([daily_realized_symbols, pd.DataFrame({
+                    'Date': [row['Date']],
+                    'Symbol': [symbol],
+                    'Realized': [realized_gain]
+                })])
 
             elif row['Action'] == 'Buy':
                 total_cost = quantity * price + commission

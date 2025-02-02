@@ -24,6 +24,13 @@ def process_metrics(txn_df: pd.DataFrame,
     :param holdings_date: The date of the holdings data.
     :param start_date: The start date for the metrics calculation (optional).
     :param end_date: The end date for the metrics calculation (optional).
+    # TODO: convert to use
+        @dataclass
+    class RealizedGainData:
+        total_realized: float
+        daily_realized: pd.DataFrame  # Date, Realized Gain, Realized Loss
+        daily_realized_symbols: pd.DataFrame  # Date, Symbol, Realized (represented as a positive number for gain, negative for loss)
+
     :return: A dictionary containing two keys:
              - 'summary': A DataFrame summarizing the metrics.
              - 'daily_realized': A DataFrame containing daily realized gains.

@@ -22,7 +22,7 @@ def test_dividend_processor():
     end_date = datetime(2024, 12, 31)
 
     # Process data
-    result = processor.process_metrics(df, start_date, end_date)
+    result = processor.process(df, start_date, end_date)
 
     # Assert results
     assert 'Total Dividends' in result
@@ -47,7 +47,7 @@ def test_dividend_processor_no_dividends():
     end_date = datetime(2024, 12, 31)
 
     # Process data
-    result = processor.process_metrics(df, start_date, end_date)
+    result = processor.process(df, start_date, end_date)
 
     # Assert results
     assert 'Total Dividends' in result
@@ -72,7 +72,7 @@ def test_dividend_outside_of_date_range_should_be_ignored():
     end_date = datetime(2024, 12, 31)
 
     # Process data
-    result = processor.process_metrics(df, start_date, end_date)
+    result = processor.process(df, start_date, end_date)
 
     # Assert results
     assert 'Total Dividends' in result
