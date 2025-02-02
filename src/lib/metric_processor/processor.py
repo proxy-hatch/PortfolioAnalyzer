@@ -17,7 +17,7 @@ class MetricsResult:
     Data class to represent the result of the metrics calculation.
 
     """
-    summary: pd.DataFrame
+    summary: Dict[str, any]
     daily_realized: pd.DataFrame
     daily_realized_symbols: pd.DataFrame
 
@@ -26,7 +26,7 @@ def process_metrics(txn_df: pd.DataFrame,
                     holdings_df: pd.DataFrame,
                     holdings_date: datetime.date,
                     start_date: Optional[str],
-                    end_date: Optional[str]) -> MetricsResult:
+                    end_date: Optional[str]) -> Dict[AccountCategory, MetricsResult]:
     """
     Process the transaction data to calculate various metrics for the given date range.
 
@@ -37,10 +37,8 @@ def process_metrics(txn_df: pd.DataFrame,
     :param end_date: The end date for the metrics calculation (optional).
     """
     logger = get_logger()
-    daily_realized_df = None
-    daily_realized_symbols_df = None
 
-    results = []
+    results = {}
     start_date = pd.to_datetime(start_date) if start_date else txn_df['Date'].min()
     end_date = pd.to_datetime(end_date) if end_date else txn_df['Date'].max()
     if holdings_date > start_date:
@@ -50,25 +48,20 @@ def process_metrics(txn_df: pd.DataFrame,
     processors = [CapitalGainProcessor(holdings_df, holdings_date), DividendProcessor()]
 
     for account_category in AccountCategory:
-        account_data = txn_df[txn_df['Account Category'] == account_category]
-        summary = {'Account Category': account_category.value}
+        summary = {}
+        daily_realized_df = None
+        daily_realized_symbols_df = None
 
+        account_data = txn_df[txn_df['Account Category'] == account_category]
         for processor in processors:
             processor_result = processor.process(account_data, start_date, end_date, account_category)
+            processor_result_dict = asdict(processor_result)
             if isinstance(processor, CapitalGainProcessor):
-                processor_result_dict = asdict(processor_result)
                 daily_realized_df = processor_result_dict.pop('daily_realized')
                 daily_realized_symbols_df = processor_result_dict.pop('daily_realized_symbols')
-                summary.update(processor_result_dict)
-            else:
-                summary.update(processor_result)
 
-        results.append(summary)
+            summary.update(processor_result_dict)
 
-    summary_df = pd.DataFrame(results)
+    results[account_category] = MetricsResult(summary, daily_realized_df, daily_realized_symbols_df)
 
-    return MetricsResult(
-        summary=summary_df,
-        daily_realized=daily_realized_df,
-        daily_realized_symbols=daily_realized_symbols_df
-    )
+    return results

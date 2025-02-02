@@ -25,8 +25,7 @@ def test_dividend_processor():
     result = processor.process(df, start_date, end_date)
 
     # Assert results
-    assert 'Total Dividends' in result
-    assert result['Total Dividends'] == 300  # 100 + 200 = 300
+    assert result.total_dividends == 300  # 100 + 200 = 300
 
 
 def test_dividend_processor_no_dividends():
@@ -50,8 +49,7 @@ def test_dividend_processor_no_dividends():
     result = processor.process(df, start_date, end_date)
 
     # Assert results
-    assert 'Total Dividends' in result
-    assert result['Total Dividends'] == 0  # No dividends in the data
+    assert result.total_dividends == 0
 
 
 def test_dividend_outside_of_date_range_should_be_ignored():
@@ -75,5 +73,4 @@ def test_dividend_outside_of_date_range_should_be_ignored():
     result = processor.process(df, start_date, end_date)
 
     # Assert results
-    assert 'Total Dividends' in result
-    assert result['Total Dividends'] == 200  # Only the second dividend should be included
+    assert result.total_dividends == 200  # Only the second dividend should be included

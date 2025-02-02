@@ -3,15 +3,13 @@ import logging
 import sys
 from datetime import datetime
 from typing import Optional, List
-
-import pandas as pd
-from dash import Dash
-
 from lib.model.enum.stage import Stage
 from lib.logger.logger import initialize_logger
 from lib.ingestion.ingest_baseline import ingest_baseline
 from lib.ingestion.ingest_transaction import ingest_transaction
 from lib.metric_processor.processor import process_metrics
+
+from lib.dash.dash import create_dash_app
 
 logger: Optional[logging.Logger] = None
 TXN_FILEPATH = '../data/all_txns.csv'
@@ -28,10 +26,11 @@ def main(start_date: Optional[str], end_date: Optional[str], baseline_date: str)
     results = process_metrics(txn_df=txn_df, holdings_df=baseline_df, start_date=start_date, end_date=end_date,
                               holdings_date=baseline_date)
 
-    logger.info("Calculation completed. Results:")
-    logger.info(results.summary)
+    logger.info("Calculation completed.")
     # results.to_csv('realized_gain_results.csv', index=False)
     # logger.info("Results saved to 'realized_gain_results.csv'.")
+    app = create_dash_app(results)
+    app.run_server(debug=True)
 
 
 def start(args: List[str]) -> None:
