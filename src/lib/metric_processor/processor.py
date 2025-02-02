@@ -21,7 +21,6 @@ class MetricsResult:
     daily_realized: pd.DataFrame
     daily_realized_symbols: pd.DataFrame
 
-
 def process_metrics(txn_df: pd.DataFrame,
                     holdings_df: pd.DataFrame,
                     holdings_date: datetime.date,
