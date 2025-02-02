@@ -1,4 +1,4 @@
-from dataclasses import asdict
+from dataclasses import asdict, dataclass
 from datetime import datetime
 from typing import Optional, Dict
 
@@ -11,11 +11,22 @@ from lib.metric_processor.dividend import DividendProcessor
 from lib.model.enum.account_category import AccountCategory
 
 
+@dataclass
+class MetricsResult:
+    """
+    Data class to represent the result of the metrics calculation.
+
+    """
+    summary: pd.DataFrame
+    daily_realized: pd.DataFrame
+    daily_realized_symbols: pd.DataFrame
+
+
 def process_metrics(txn_df: pd.DataFrame,
                     holdings_df: pd.DataFrame,
                     holdings_date: datetime.date,
                     start_date: Optional[str],
-                    end_date: Optional[str]) -> Dict[str, pd.DataFrame]:
+                    end_date: Optional[str]) -> MetricsResult:
     """
     Process the transaction data to calculate various metrics for the given date range.
 
@@ -24,18 +35,6 @@ def process_metrics(txn_df: pd.DataFrame,
     :param holdings_date: The date of the holdings data.
     :param start_date: The start date for the metrics calculation (optional).
     :param end_date: The end date for the metrics calculation (optional).
-    # TODO: convert to use
-        @dataclass
-    class RealizedGainData:
-        total_realized: float
-        daily_realized: pd.DataFrame  # Date, Realized Gain, Realized Loss
-        daily_realized_symbols: pd.DataFrame  # Date, Symbol, Realized (represented as a positive number for gain, negative for loss)
-
-    :return: A dictionary containing two keys:
-             - 'summary': A DataFrame summarizing the metrics.
-             - 'daily_realized': A DataFrame containing daily realized gains.
-             - 'daily_realized_symbols': A DataFrame containing daily realized gains by symbols.
-
     """
     logger = get_logger()
     daily_realized_df = None
@@ -68,8 +67,8 @@ def process_metrics(txn_df: pd.DataFrame,
 
     summary_df = pd.DataFrame(results)
 
-    return {
-        'summary': summary_df,
-        'daily_realized': daily_realized_df,
-        'daily_realized_symbols': daily_realized_symbols_df
-    }
+    return MetricsResult(
+        summary=summary_df,
+        daily_realized=daily_realized_df,
+        daily_realized_symbols=daily_realized_symbols_df
+    )

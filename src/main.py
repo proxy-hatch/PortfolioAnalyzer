@@ -17,14 +17,6 @@ logger: Optional[logging.Logger] = None
 TXN_FILEPATH = '../data/all_txns.csv'
 STATEMENTS_FILEPATH = '../data/statements'
 
-#
-# def aggregate_monthly_realized(df: pd.DataFrame) -> pd.DataFrame:
-#     """
-#     Aggregate the total realized gain/loss on a monthly basis.
-#     :param df: DataFrame containing the daily realized gain/loss data.
-#     :return: DataFrame containing the monthly aggregated realized gain/loss data.
-#     """
-#     return df.resample('M').sum()
 
 def main(start_date: Optional[str], end_date: Optional[str], baseline_date: str) -> None:
     logger.info("Begin analysis.")
@@ -36,9 +28,8 @@ def main(start_date: Optional[str], end_date: Optional[str], baseline_date: str)
     results = process_metrics(txn_df=txn_df, holdings_df=baseline_df, start_date=start_date, end_date=end_date,
                               holdings_date=baseline_date)
 
-
     logger.info("Calculation completed. Results:")
-    logger.info(results['summary'])
+    logger.info(results.summary)
     # results.to_csv('realized_gain_results.csv', index=False)
     # logger.info("Results saved to 'realized_gain_results.csv'.")
 
