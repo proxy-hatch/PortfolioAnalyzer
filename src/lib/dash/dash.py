@@ -22,12 +22,6 @@ BASELINE_DATE = '2023-12-31'
 # Global variables to store analysis result
 analysis_result: Dict[AccountCategory, MetricsResult] = {}
 
-# {account_category: MetricsResult(
-#     summary=pd.DataFrame(),
-#     daily_realized=pd.DataFrame(),
-#     daily_realized_symbols=pd.DataFrame()
-# ) for account_category in AccountCategory}
-
 
 def create_dash_app(txn_df: pd.DataFrame, baseline_df: pd.DataFrame, baseline_date: datetime) -> Dash:
     """
@@ -57,8 +51,8 @@ def create_dash_app(txn_df: pd.DataFrame, baseline_df: pd.DataFrame, baseline_da
             start_date='2024-01-01',
             end_date='2024-12-31'
         ),
-        html.Div(id='analysis_result_updated', style={'display': 'none'}),
         # Hidden div to trigger upon analysis result update
+        html.Div(id='analysis_result_updated', style={'display': 'none'}),
         html.Div(id='summary'),
         dcc.Graph(id='monthly-bar-chart'),
         html.Div(id='daily-details')
@@ -92,7 +86,8 @@ def create_dash_app(txn_df: pd.DataFrame, baseline_df: pd.DataFrame, baseline_da
         # Create summary table
         summary_table = DataTable(
             data=[result.summary],
-            columns=[{"name": i, "id": i, "type": "numeric", "format": FormatTemplate.money(2)} for i in result.summary],
+            columns=[{"name": i, "id": i, "type": "numeric", "format": FormatTemplate.money(2)} for i in
+                     result.summary],
             style_table={'overflowX': 'auto'},
             style_cell={'textAlign': 'left'},
             style_header={
