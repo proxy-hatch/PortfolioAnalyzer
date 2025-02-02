@@ -40,4 +40,6 @@ def initialize_logger(stage: Stage) -> logging.Logger:
 
         logger.addHandler(console_handler)
 
+    global _log_instance
+    _log_instance = logger
     return logger
