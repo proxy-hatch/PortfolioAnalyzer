@@ -7,12 +7,12 @@ from lib.metric_processor.dividend import DividendProcessor
 def test_dividend_processor():
     # Create sample data
     data = {
-        'Transaction Date': ['2024-01-01 12:00:00 PM', '2024-01-02 12:00:00 PM'],
+        'Date': ['2024-01-01 12:00:00 PM', '2024-01-02 12:00:00 PM'],
         'Activity Type': ['Dividends', 'Dividends'],
         'Net Amount': [100, 200]
     }
     df = pd.DataFrame(data)
-    df['Transaction Date'] = pd.to_datetime(df['Transaction Date'], format='%Y-%m-%d %I:%M:%S %p')
+    df['Date'] = pd.to_datetime(df['Date'], format='%Y-%m-%d %I:%M:%S %p')
 
     # Initialize processor
     processor = DividendProcessor()
@@ -22,7 +22,7 @@ def test_dividend_processor():
     end_date = datetime(2024, 12, 31)
 
     # Process data
-    result = processor.process(df, start_date, end_date)
+    result = processor.process_metrics(df, start_date, end_date)
 
     # Assert results
     assert 'Total Dividends' in result
@@ -32,12 +32,12 @@ def test_dividend_processor():
 def test_dividend_processor_no_dividends():
     # Create sample data with no dividends
     data = {
-        'Transaction Date': ['2024-01-01 12:00:00 PM'],
+        'Date': ['2024-01-01 12:00:00 PM'],
         'Activity Type': ['Trades'],
         'Net Amount': [100]
     }
     df = pd.DataFrame(data)
-    df['Transaction Date'] = pd.to_datetime(df['Transaction Date'], format='%Y-%m-%d %I:%M:%S %p')
+    df['Date'] = pd.to_datetime(df['Date'], format='%Y-%m-%d %I:%M:%S %p')
 
     # Initialize processor
     processor = DividendProcessor()
@@ -47,7 +47,7 @@ def test_dividend_processor_no_dividends():
     end_date = datetime(2024, 12, 31)
 
     # Process data
-    result = processor.process(df, start_date, end_date)
+    result = processor.process_metrics(df, start_date, end_date)
 
     # Assert results
     assert 'Total Dividends' in result
@@ -57,12 +57,12 @@ def test_dividend_processor_no_dividends():
 def test_dividend_outside_of_date_range_should_be_ignored():
     # Create sample data
     data = {
-        'Transaction Date': ['2024-01-01 12:00:00 PM', '2024-01-02 12:00:00 PM'],
+        'Date': ['2024-01-01 12:00:00 PM', '2024-01-02 12:00:00 PM'],
         'Activity Type': ['Dividends', 'Dividends'],
         'Net Amount': [100, 200]
     }
     df = pd.DataFrame(data)
-    df['Transaction Date'] = pd.to_datetime(df['Transaction Date'], format='%Y-%m-%d %I:%M:%S %p')
+    df['Date'] = pd.to_datetime(df['Date'], format='%Y-%m-%d %I:%M:%S %p')
 
     # Initialize processor
     processor = DividendProcessor()
@@ -72,7 +72,7 @@ def test_dividend_outside_of_date_range_should_be_ignored():
     end_date = datetime(2024, 12, 31)
 
     # Process data
-    result = processor.process(df, start_date, end_date)
+    result = processor.process_metrics(df, start_date, end_date)
 
     # Assert results
     assert 'Total Dividends' in result

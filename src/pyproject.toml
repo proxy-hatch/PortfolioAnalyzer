@@ -12,6 +12,8 @@ pandas = "^2.2.3"
 
 #[tool.poetry.scripts]
 #analyze-portfolio = "src.main:start"
+plotly = "^6.0.0"
+dash = "^2.18.2"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.4"

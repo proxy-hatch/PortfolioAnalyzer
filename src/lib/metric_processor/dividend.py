@@ -11,6 +11,6 @@ class DividendProcessor(BaseProcessor):
                 *args, **kwargs) -> Dict[str, float]:
         dividends = df[df['Activity Type'] == 'Dividends']
         total_dividends = dividends[
-            (dividends['Transaction Date'] >= start_date) & (dividends['Transaction Date'] <= end_date)
+            (dividends['Date'] >= start_date) & (dividends['Date'] <= end_date)
             ]['Net Amount'].sum()
         return {'Total Dividends': total_dividends}

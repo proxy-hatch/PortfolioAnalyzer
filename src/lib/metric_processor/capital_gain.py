@@ -21,8 +21,9 @@ class CapitalGainProcessor(BaseProcessor):
 
     @dataclass
     class RealizedGainData:
-        total_realized_gain: float
-        daily_realized_gain: pd.DataFrame
+        total_realized: float
+        daily_realized: pd.DataFrame  # Date, Realized Gain, Realized Loss
+        daily_realized_symbols: pd.DataFrame  # Date, Symbol, Realized (represented as a positive number for gain, negative for loss)
 
     def process(self, df: pd.DataFrame,
                 start_date: pd.Timestamp,
@@ -48,16 +49,19 @@ class CapitalGainProcessor(BaseProcessor):
             positions[symbol] = Position(quantity=row['Quantity'], avg_price=row['AverageCost'])
 
         # init dataframe
-        daily_realized_gain = pd.DataFrame(columns=['Date', 'Realized Gain', 'Realized Loss'])
-        daily_realized_gain['Date'] = pd.date_range(start=start_date, end=end_date)
-        daily_realized_gain['Realized Gain'] = 0.00
-        daily_realized_gain['Realized Loss'] = 0.00
+        daily_realized = pd.DataFrame(columns=['Date', 'Realized Gain', 'Realized Loss'])
+        daily_realized['Date'] = pd.date_range(start=start_date, end=end_date)
+        daily_realized['Realized Gain'] = 0.00
+        daily_realized['Realized Loss'] = 0.00
+        daily_realized_symbols = pd.DataFrame(columns=['Date', 'Symbol', 'Realized'])
+        daily_realized_symbols['Date'] = pd.date_range(start=start_date, end=end_date)
+        daily_realized_symbols['Realized'] = 0.00
 
         trades = df[df['Activity Type'] == 'Trades']
 
-        before_trades = trades[(trades['Transaction Date'] > self.holdings_date)
-                               & (trades['Transaction Date'] < start_date)]
-        during_trades = trades[(trades['Transaction Date'] >= start_date) & (trades['Transaction Date'] <= end_date)]
+        before_trades = trades[(trades['Date'] > self.holdings_date)
+                               & (trades['Date'] < start_date)]
+        during_trades = trades[(trades['Date'] >= start_date) & (trades['Date'] <= end_date)]
 
         # Process before_trades to establish cost basis
         for i, row in before_trades.iterrows():
@@ -111,11 +115,15 @@ class CapitalGainProcessor(BaseProcessor):
                 positions[symbol].quantity -= quantity
 
                 if realized_gain > 0:
-                    daily_realized_gain.loc[
-                        daily_realized_gain['Date'] == row['Transaction Date'], 'Realized Gain'] = realized_gain
+                    daily_realized.loc[
+                        daily_realized['Date'] == row['Date'], 'Realized Gain'] = realized_gain
                 else:
-                    daily_realized_gain.loc[
-                        daily_realized_gain['Date'] == row['Transaction Date'], 'Realized Loss'] = realized_gain
+                    daily_realized.loc[
+                        daily_realized['Date'] == row['Date'], 'Realized Loss'] = realized_gain
+
+                daily_realized_symbols.loc[
+                    daily_realized_symbols['Date'] == row['Date'], ['Symbol', 'Realized']
+                ] = [symbol, realized_gain]
 
             elif row['Action'] == 'Buy':
                 total_cost = quantity * price + commission
@@ -127,7 +135,9 @@ class CapitalGainProcessor(BaseProcessor):
                     new_avg_price = (position.avg_price * position.quantity + total_cost) / total_quantity
                     positions[symbol] = Position(quantity=total_quantity, avg_price=new_avg_price)
 
-        return self.RealizedGainData(total_realized_gain=realized_gain, daily_realized_gain=daily_realized_gain)
+        return self.RealizedGainData(total_realized=realized_gain,
+                                     daily_realized=daily_realized,
+                                     daily_realized_symbols=daily_realized_symbols)
 
     @dataclass
     class RowData:

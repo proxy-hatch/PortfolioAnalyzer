@@ -9,7 +9,7 @@ from pandas._testing import assert_frame_equal
 def test_capital_gain_processor():
     # Create sample data
     data = {
-        'Transaction Date': ['2024-01-01', '2024-01-02', '2024-01-03'],
+        'Date': ['2024-01-01', '2024-01-02', '2024-01-03'],
         'Activity Type': ['Trades', 'Trades', 'Trades'],
         'Symbol': ['AAPL', 'AAPL', 'AAPL'],
         'Quantity': [10, -5, 5],
@@ -18,7 +18,7 @@ def test_capital_gain_processor():
         'Action': ['Buy', 'Sell', 'Buy']
     }
     df = pd.DataFrame(data)
-    df['Transaction Date'] = pd.to_datetime(df['Transaction Date'], format='%Y-%m-%d')
+    df['Date'] = pd.to_datetime(df['Date'], format='%Y-%m-%d')
 
     # Initialize processor
     processor = CapitalGainProcessor()
@@ -28,10 +28,10 @@ def test_capital_gain_processor():
     end_date = datetime(2024, 12, 31)
 
     # Process data
-    result = processor.process(df, start_date, end_date)
+    result = processor.process_metrics(df, start_date, end_date)
 
     # Assert results
-    assert result.total_realized_gain == 240  # (150-(100*10+10)/10)*5 - 5 = 240
+    assert result.total_realized == 240  # (150-(100*10+10)/10)*5 - 5 = 240
     date_range = pd.date_range(start=start_date, end=end_date)
     all_zeros = [0] * len(date_range)
     expected_df = pd.DataFrame({
@@ -40,13 +40,13 @@ def test_capital_gain_processor():
         'Realized Loss': all_zeros
     })
     expected_df.loc[expected_df['Date'] == pd.Timestamp('2024-01-02'), 'Realized Gain'] = 240
-    assert_frame_equal(result.daily_realized_gain, expected_df)
+    assert_frame_equal(result.daily_realized, expected_df)
 
 
 def test_capital_gain_processor_no_sell():
     # Create sample data with no sell transactions
     data = {
-        'Transaction Date': ['2024-01-01', '2024-01-02'],
+        'Date': ['2024-01-01', '2024-01-02'],
         'Activity Type': ['Trades', 'Trades'],
         'Symbol': ['AAPL', 'AAPL'],
         'Quantity': [10, 5],
@@ -55,7 +55,7 @@ def test_capital_gain_processor_no_sell():
         'Action': ['Buy', 'Buy']
     }
     df = pd.DataFrame(data)
-    df['Transaction Date'] = pd.to_datetime(df['Transaction Date'], format='%Y-%m-%d')
+    df['Date'] = pd.to_datetime(df['Date'], format='%Y-%m-%d')
 
     # Initialize processor
     processor = CapitalGainProcessor()
@@ -65,11 +65,11 @@ def test_capital_gain_processor_no_sell():
     end_date = datetime(2024, 12, 31)
 
     # Process data
-    result = processor.process(df, start_date, end_date)
+    result = processor.process_metrics(df, start_date, end_date)
 
     # Assert results
-    assert result.total_realized_gain == 0  # No sell transactions, so no realized gain
-    print(result.daily_realized_gain)
+    assert result.total_realized == 0  # No sell transactions, so no realized gain
+    print(result.daily_realized)
     date_range = pd.date_range(start=start_date, end=end_date)
     all_zeros = [0] * len(date_range)
     expected_df = pd.DataFrame({
@@ -77,12 +77,12 @@ def test_capital_gain_processor_no_sell():
         'Realized Gain': all_zeros,
         'Realized Loss': all_zeros
     })
-    assert_frame_equal(result.daily_realized_gain, expected_df)
+    assert_frame_equal(result.daily_realized, expected_df)
 
 
 def test_capital_gain_processor_sell_to_negative_should_raise_value_error():
     data = {
-        'Transaction Date': ['2024-01-01', '2024-01-02'],
+        'Date': ['2024-01-01', '2024-01-02'],
         'Activity Type': ['Trades', 'Trades'],
         'Symbol': ['AAPL', 'AAPL'],
         'Quantity': [10, -15],
@@ -91,7 +91,7 @@ def test_capital_gain_processor_sell_to_negative_should_raise_value_error():
         'Action': ['Buy', 'Sell']
     }
     df = pd.DataFrame(data)
-    df['Transaction Date'] = pd.to_datetime(df['Transaction Date'], format='%Y-%m-%d')
+    df['Date'] = pd.to_datetime(df['Date'], format='%Y-%m-%d')
 
     # Initialize processor
     processor = CapitalGainProcessor()
@@ -102,12 +102,12 @@ def test_capital_gain_processor_sell_to_negative_should_raise_value_error():
 
     # assert
     with pytest.raises(ValueError, match='Attempting to sell more shares than available for*'):
-        processor.process(df, start_date, end_date)
+        processor.process_metrics(df, start_date, end_date)
 
 
 def test_capital_gain_processor_sell_without_bought():
     data = {
-        'Transaction Date': ['2024-01-01', '2024-01-02'],
+        'Date': ['2024-01-01', '2024-01-02'],
         'Activity Type': ['Trades', 'Trades'],
         'Symbol': ['AAPL', 'TSLA'],
         'Quantity': [-5, -5],
@@ -116,7 +116,7 @@ def test_capital_gain_processor_sell_without_bought():
         'Action': ['Sell', 'Sell']
     }
     df = pd.DataFrame(data)
-    df['Transaction Date'] = pd.to_datetime(df['Transaction Date'], format='%Y-%m-%d')
+    df['Date'] = pd.to_datetime(df['Date'], format='%Y-%m-%d')
 
     # Initialize processor
     processor = CapitalGainProcessor()
@@ -127,12 +127,12 @@ def test_capital_gain_processor_sell_without_bought():
 
     # assert
     with pytest.raises(ValueError, match='Sell transaction found for symbol*'):
-        processor.process(df, start_date, end_date)
+        processor.process_metrics(df, start_date, end_date)
 
 
 def test_capital_gain_processor_before_trades_should_affect_cumulative_position():
     data = {
-        'Transaction Date': ['2023-11-01', '2023-12-01', '2024-01-01', '2024-01-02'],
+        'Date': ['2023-11-01', '2023-12-01', '2024-01-01', '2024-01-02'],
         'Activity Type': ['Trades', 'Trades', 'Trades', 'Trades'],
         'Symbol': ['AAPL', 'AAPL', 'AAPL', 'AAPL'],
         'Quantity': [100, -100, 10, -5],
@@ -141,7 +141,7 @@ def test_capital_gain_processor_before_trades_should_affect_cumulative_position(
         'Action': ['Buy', 'Sell', 'Buy', 'Sell']
     }
     df = pd.DataFrame(data)
-    df['Transaction Date'] = pd.to_datetime(df['Transaction Date'], format='%Y-%m-%d')
+    df['Date'] = pd.to_datetime(df['Date'], format='%Y-%m-%d')
 
     # Initialize processor
     processor = CapitalGainProcessor()
@@ -151,10 +151,10 @@ def test_capital_gain_processor_before_trades_should_affect_cumulative_position(
     end_date = datetime(2024, 12, 31)
 
     # Process data
-    result = processor.process(df, start_date, end_date)
+    result = processor.process_metrics(df, start_date, end_date)
 
     # Assert results
-    assert result.total_realized_gain == 240
+    assert result.total_realized == 240
     date_range = pd.date_range(start=start_date, end=end_date)
     all_zeros = [0] * len(date_range)
     expected_df = pd.DataFrame({
@@ -163,12 +163,12 @@ def test_capital_gain_processor_before_trades_should_affect_cumulative_position(
         'Realized Loss': all_zeros
     })
     expected_df.loc[expected_df['Date'] == pd.Timestamp('2024-01-02'), 'Realized Gain'] = 240
-    assert_frame_equal(result.daily_realized_gain, expected_df)
+    assert_frame_equal(result.daily_realized, expected_df)
 
 
 def test_capital_gain_processor_after_trades_should_not_affect_cap_gain():
     data = {
-        'Transaction Date': ['2024-01-01', '2024-01-02', '2024-01-03', '2024-01-04'],
+        'Date': ['2024-01-01', '2024-01-02', '2024-01-03', '2024-01-04'],
         'Activity Type': ['Trades', 'Trades', 'Trades', 'AAPL'],
         'Symbol': ['AAPL', 'AAPL', 'AAPL', 'AAPL'],
         'Quantity': [10, -5, 5, -10],
@@ -177,7 +177,7 @@ def test_capital_gain_processor_after_trades_should_not_affect_cap_gain():
         'Action': ['Buy', 'Sell', 'Buy', 'Sell']
     }
     df = pd.DataFrame(data)
-    df['Transaction Date'] = pd.to_datetime(df['Transaction Date'], format='%Y-%m-%d')
+    df['Date'] = pd.to_datetime(df['Date'], format='%Y-%m-%d')
 
     # Initialize processor
     processor = CapitalGainProcessor()
@@ -187,10 +187,10 @@ def test_capital_gain_processor_after_trades_should_not_affect_cap_gain():
     end_date = datetime(2024, 1, 2)
 
     # Process data
-    result = processor.process(df, start_date, end_date)
+    result = processor.process_metrics(df, start_date, end_date)
 
     # Assert results
-    assert result.total_realized_gain == 240
+    assert result.total_realized == 240
     date_range = pd.date_range(start=start_date, end=end_date)
     all_zeros = [0] * len(date_range)
     expected_df = pd.DataFrame({
@@ -199,4 +199,4 @@ def test_capital_gain_processor_after_trades_should_not_affect_cap_gain():
         'Realized Loss': all_zeros
     })
     expected_df.loc[expected_df['Date'] == pd.Timestamp('2024-01-02'), 'Realized Gain'] = 240
-    assert_frame_equal(result.daily_realized_gain, expected_df)
+    assert_frame_equal(result.daily_realized, expected_df)
