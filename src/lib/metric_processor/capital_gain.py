@@ -20,7 +20,7 @@ class CapitalGainProcessor(BaseProcessor):
         self.holdings_date = pd.Timestamp(holdings_date)
 
     @dataclass
-    class RealizedGainData:
+    class RealizedGainResult:
         total_realized: float
         daily_realized: pd.DataFrame  # Date, Realized Gain, Realized Loss
         daily_realized_symbols: pd.DataFrame  # Date, Symbol, Realized (represented as a positive number for gain, negative for loss)
@@ -28,7 +28,7 @@ class CapitalGainProcessor(BaseProcessor):
     def process(self, df: pd.DataFrame,
                 start_date: pd.Timestamp,
                 end_date: pd.Timestamp,
-                account_category: AccountCategory) -> RealizedGainData:
+                account_category: AccountCategory) -> RealizedGainResult:
         """
         Process the DataFrame to calculate
         1. the total realized gain for the given date range.
@@ -40,7 +40,6 @@ class CapitalGainProcessor(BaseProcessor):
         :param account_category:
         :return: RealizedGainData
         """
-        realized_gain = 0
         holdings_data = self.holdings_df[self.holdings_df['Account Category'] == account_category]
 
         positions: Dict[str, Position] = {}
@@ -76,6 +75,7 @@ class CapitalGainProcessor(BaseProcessor):
                     new_avg_price = (position.avg_price * position.quantity + total_cost) / total_quantity
                     positions[symbol] = Position(quantity=total_quantity, avg_price=new_avg_price)
 
+
             elif row['Action'] == 'Sell':
                 if symbol not in positions:
                     self.logger.error(f"Sell transaction found for symbol {symbol} with no prior holdings on row {i}.")
@@ -89,6 +89,7 @@ class CapitalGainProcessor(BaseProcessor):
                 # Reduce the position
                 positions[symbol].quantity -= quantity
 
+        total_realized = 0.0
         for i, row in during_trades.iterrows():
             symbol, quantity, price, commission, action = astuple(self._get_row_data(row))
 
@@ -105,22 +106,24 @@ class CapitalGainProcessor(BaseProcessor):
                 # Calculate realized gain (subtract commission from proceeds)
                 proceeds = (price * quantity) - commission
                 cost_basis = position.avg_price * quantity
-                realized_gain += proceeds - cost_basis
+                realized = proceeds - cost_basis
                 # Reduce the position
                 positions[symbol].quantity -= quantity
 
-                if realized_gain > 0:
+                if realized > 0:
                     daily_realized.loc[
-                        daily_realized['Date'] == row['Date'], 'Realized Gain'] += realized_gain
+                        daily_realized['Date'] == row['Date'], 'Realized Gain'] += realized
                 else:
                     daily_realized.loc[
-                        daily_realized['Date'] == row['Date'], 'Realized Loss'] -= realized_gain
+                        daily_realized['Date'] == row['Date'], 'Realized Loss'] -= realized
 
                 daily_realized_symbols = pd.concat([daily_realized_symbols, pd.DataFrame({
                     'Date': [row['Date']],
                     'Symbol': [symbol],
-                    'Realized': [realized_gain]
+                    'Realized': [realized]
                 })])
+
+                total_realized += realized
 
             elif row['Action'] == 'Buy':
                 total_cost = quantity * price + commission
@@ -132,9 +135,9 @@ class CapitalGainProcessor(BaseProcessor):
                     new_avg_price = (position.avg_price * position.quantity + total_cost) / total_quantity
                     positions[symbol] = Position(quantity=total_quantity, avg_price=new_avg_price)
 
-        return self.RealizedGainData(total_realized=realized_gain,
-                                     daily_realized=daily_realized,
-                                     daily_realized_symbols=daily_realized_symbols)
+        return self.RealizedGainResult(total_realized=total_realized,
+                                       daily_realized=daily_realized,
+                                       daily_realized_symbols=daily_realized_symbols)
 
     @dataclass
     class RowData:
