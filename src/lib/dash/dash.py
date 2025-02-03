@@ -4,8 +4,7 @@ from typing import Dict
 import pandas as pd
 from dash import Dash, html, dcc, Output, Input
 import plotly.express as px
-from dash.dash_table import DataTable
-from dash_table import FormatTemplate
+from dash.dash_table import DataTable, FormatTemplate
 
 from lib.model.enum.account_category import AccountCategory
 
