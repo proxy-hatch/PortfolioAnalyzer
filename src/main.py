@@ -1,6 +1,9 @@
 import logging
 from datetime import datetime
 from typing import Optional
+
+from lib.model.enum.account_category import AccountCategory
+from lib.model.enum.account_name import AccountName
 from lib.model.enum.stage import Stage
 from lib.logger.logger import initialize_logger
 from lib.ingestion.ingest_baseline import get_current_holdings
@@ -21,7 +24,14 @@ def main() -> None:
     logger.info("Begin analysis.")
 
     q = QuestradeInterface()
-    q.get_holdings()
+    # holdings = q.get_holdings(account_category=AccountCategory.TFSA_RRSP)
+    # logger.info(f"Holdings retrieved.\n {holdings.to_string()}")
+
+    # start_date = datetime.strptime('2024-12-01', '%Y-%m-%d')
+    # end_date = datetime.strptime('2024-12-31', '%Y-%m-%d')
+    # activities = q.get_account_activities(account_category=AccountCategory.TFSA_RRSP, start_date=start_date, end_date=end_date)
+    # logger.info(f"Activities retrieved.\n {activities.to_string()}")
+
 
     #
     # baseline_date = datetime.strptime(BASELINE_DATE, '%Y-%m-%d')
@@ -31,8 +41,8 @@ def main() -> None:
     # logger.info("Calculation completed.")
     # # results.to_csv('realized_gain_results.csv', index=False)
     # # logger.info("Results saved to 'realized_gain_results.csv'.")
-    # app = create_dash_app(txn_df=txn_df, baseline_df=baseline_df, baseline_date=baseline_date)
-    # app.run_server(debug=True)
+    app = create_dash_app(questrade_client=QuestradeInterface())
+    app.run_server(debug=True)
 
 
 if __name__ == "__main__":

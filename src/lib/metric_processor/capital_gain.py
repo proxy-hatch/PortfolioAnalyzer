@@ -14,10 +14,9 @@ from lib.model.enum.account_category import AccountCategory
 
 
 class CapitalGainProcessor(BaseProcessor):
-    def __init__(self, holdings_df: pd.DataFrame, holdings_date: datetime.datetime):
+    def __init__(self, holdings_df: pd.DataFrame):
         super().__init__()
         self.holdings_df = holdings_df
-        self.holdings_date = pd.Timestamp(holdings_date)
 
     @dataclass
     class RealizedGainResult:
@@ -28,7 +27,7 @@ class CapitalGainProcessor(BaseProcessor):
     def process(self, df: pd.DataFrame,
                 start_date: pd.Timestamp,
                 end_date: pd.Timestamp,
-                account_category: AccountCategory) -> RealizedGainResult:
+                ) -> RealizedGainResult:
         """
         Process the DataFrame to calculate
         1. the total realized gain for the given date range.
@@ -37,13 +36,10 @@ class CapitalGainProcessor(BaseProcessor):
         :param df:
         :param start_date:
         :param end_date:
-        :param account_category:
         :return: RealizedGainData
         """
-        holdings_data = self.holdings_df[self.holdings_df['Account Category'] == account_category]
-
         positions: Dict[str, Position] = {}
-        for _, row in holdings_data.iterrows():
+        for _, row in self.holdings_df.iterrows():
             symbol = row['Symbol']
             positions[symbol] = Position(quantity=row['Quantity'], avg_price=row['AverageCost'])
 

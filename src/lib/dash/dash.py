@@ -14,6 +14,7 @@ from lib.metric_processor.processor import process_metrics
 from lib.metric_processor.processor import MetricsResult
 
 from lib.logger.logger import get_logger
+from lib.questrade.questrade import QuestradeInterface
 
 TXN_FILEPATH = '../data/all_txns.csv'
 STATEMENTS_FILEPATH = '../data/statements'
@@ -23,7 +24,7 @@ BASELINE_DATE = '2023-12-31'
 analysis_result: Dict[AccountCategory, MetricsResult] = {}
 
 
-def create_dash_app(txn_df: pd.DataFrame, baseline_df: pd.DataFrame, baseline_date: datetime) -> Dash:
+def create_dash_app(questrade_client: QuestradeInterface) -> Dash:
     """
     Create a Dash app to display the analysis result.
 
@@ -61,16 +62,27 @@ def create_dash_app(txn_df: pd.DataFrame, baseline_df: pd.DataFrame, baseline_da
     @app.callback(
         Output('analysis_result_updated', 'children'),
         [Input('date-range-picker', 'start_date'),
-         Input('date-range-picker', 'end_date')]
+         Input('date-range-picker', 'end_date'),
+         Input('account-category-dropdown', 'value'),
+         ]
     )
-    def update_analysis_result(start_date, end_date):
+    def update_analysis_result(start_date, end_date, selected_account):
+        logger.info(f"Updating analysis result with start date: {start_date}, end date: {end_date}, "
+                    f"selected account: {selected_account}")
+        account_category = AccountCategory.categorize(selected_account)
+        start_date  = datetime.strptime(start_date, '%Y-%m-%d').date()
+        end_date = datetime.strptime(end_date, '%Y-%m-%d').date()
+
+        txn_df = questrade_client.get_account_activities(account_category, start_date, end_date)
+        holdings_df = questrade_client.get_holdings()[account_category]
+
         global analysis_result
-        analysis_result = process_metrics(txn_df=txn_df, holdings_df=baseline_df, start_date=start_date,
-                                          end_date=end_date,
-                                          holdings_date=baseline_date)
+        analysis_result = process_metrics(txn_df=txn_df, holdings_df=holdings_df, start_date=start_date,
+                                          end_date=end_date)
         logger.info(f"Analysis result updated.")
         return
 
+# TODO: update
     @app.callback(
         [Output('summary', 'children'),
          Output('monthly-bar-chart', 'figure')],
