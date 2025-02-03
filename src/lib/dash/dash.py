@@ -21,10 +21,10 @@ STATEMENTS_FILEPATH = '../data/statements'
 BASELINE_DATE = '2023-12-31'
 
 # Global variables to store analysis result
-analysis_result: Dict[AccountCategory, MetricsResult] = {}
+analysis_result: MetricsResult = None
 
 
-def create_dash_app(questrade_client: QuestradeInterface) -> Dash:
+def create_dash_app(questrade_client: QuestradeInterface, baseline_df: pd.DataFrame, baseline_date: datetime) -> Dash:
     """
     Create a Dash app to display the analysis result.
 
@@ -70,36 +70,39 @@ def create_dash_app(questrade_client: QuestradeInterface) -> Dash:
         logger.info(f"Updating analysis result with start date: {start_date}, end date: {end_date}, "
                     f"selected account: {selected_account}")
         account_category = AccountCategory.categorize(selected_account)
-        start_date  = datetime.strptime(start_date, '%Y-%m-%d').date()
+
+        txn_start_date = (datetime.strptime(BASELINE_DATE, '%Y-%m-%d') + pd.DateOffset(days=1)).tz_localize(None).date()
         end_date = datetime.strptime(end_date, '%Y-%m-%d').date()
 
-        txn_df = questrade_client.get_account_activities(account_category, start_date, end_date)
-        holdings_df = questrade_client.get_holdings()[account_category]
+        txn_df = questrade_client.get_account_activities(account_category=account_category,
+                                                         start_date=txn_start_date,
+                                                         end_date=end_date)
+        holdings_df = questrade_client.get_holdings(account_category=account_category)
 
         global analysis_result
-        analysis_result = process_metrics(txn_df=txn_df, holdings_df=holdings_df, start_date=start_date,
-                                          end_date=end_date)
+        analysis_result = process_metrics(txn_df=txn_df,
+                                          start_date=pd.to_datetime(start_date),
+                                          end_date=pd.to_datetime(end_date),
+                                          holdings_df=holdings_df,
+                                          baseline_df=baseline_df,
+                                          baseline_date=baseline_date
+                                          )
         logger.info(f"Analysis result updated.")
         return
 
-# TODO: update
     @app.callback(
         [Output('summary', 'children'),
          Output('monthly-bar-chart', 'figure')],
-        [Input('account-category-dropdown', 'value'),
-         Input('analysis_result_updated', 'children')]  # Trigger on analysis result update
+        [Input('analysis_result_updated', 'children')]  # Trigger on analysis result update
     )
-    def update_dashboard(selected_account, _):
+    def update_dashboard(_):
         global analysis_result
-
-        account_category = AccountCategory[selected_account]
-        result = analysis_result[account_category]
 
         # Create summary table
         summary_table = DataTable(
-            data=[result.summary],
+            data=[analysis_result.summary],
             columns=[{"name": i, "id": i, "type": "numeric", "format": FormatTemplate.money(2)} for i in
-                     result.summary],
+                     analysis_result.summary],
             style_table={'overflowX': 'auto'},
             style_cell={'textAlign': 'left'},
             style_header={
@@ -109,7 +112,7 @@ def create_dash_app(questrade_client: QuestradeInterface) -> Dash:
         )
 
         # Aggregate data by month
-        daily_realized = result.daily_realized
+        daily_realized = analysis_result.daily_realized
         daily_realized['Month'] = daily_realized['Date'].dt.to_period('M')
         monthly_realized = daily_realized.groupby('Month').agg({
             'Realized Gain': 'sum',
@@ -127,18 +130,15 @@ def create_dash_app(questrade_client: QuestradeInterface) -> Dash:
     @app.callback(
         Output('daily-details', 'children'),
         [Input('monthly-bar-chart', 'clickData'),
-         Input('account-category-dropdown', 'value'),
          Input('analysis_result_updated', 'children')]
     )
-    def display_daily_details(click_data, selected_account, _):
+    def display_daily_details(click_data, _):
         global analysis_result
 
         if click_data is None:
             return html.Div()
 
-        account_category = AccountCategory[selected_account]
-        result = analysis_result[account_category]
-        daily_realized_symbols = result.daily_realized_symbols
+        daily_realized_symbols = analysis_result.daily_realized_symbols
 
         month = click_data['points'][0]['x']
         is_gain = click_data['points'][0]['curveNumber'] == 0

@@ -41,7 +41,7 @@ def test_capital_gain_processor_when_no_holding():
     end_date = datetime(2024, 12, 31)
 
     # Process data
-    result = processor.process(df=df, start_date=start_date, end_date=end_date,
+    result = processor.process(txn_df=df, start_date=start_date, end_date=end_date,
                                account_category=AccountCategory.TFSA_RRSP)
 
     # Assert results
@@ -87,7 +87,7 @@ def test_capital_gain_processor_when_no_holding_no_sell():
     end_date = datetime(2024, 12, 31)
 
     # Process data
-    result = processor.process(df=df, start_date=start_date, end_date=end_date,
+    result = processor.process(txn_df=df, start_date=start_date, end_date=end_date,
                                account_category=AccountCategory.TFSA_RRSP)
 
     # Assert results
@@ -129,7 +129,7 @@ def test_capital_gain_processor_when_no_holding_sell_to_negative_should_log_erro
 
     # Process data
     with caplog.at_level(logging.ERROR):
-        processor.process(df=df, start_date=start_date, end_date=end_date, account_category=AccountCategory.TFSA_RRSP)
+        processor.process(txn_df=df, start_date=start_date, end_date=end_date, account_category=AccountCategory.TFSA_RRSP)
 
     assert any("Attempting to sell more shares than available for" in message for message in caplog.messages)
 
@@ -156,7 +156,7 @@ def test_capital_gain_processor_when_no_holding_sell_without_bought_should_log_e
 
     # Process data
     with caplog.at_level(logging.ERROR):
-        processor.process(df=df, start_date=start_date, end_date=end_date, account_category=AccountCategory.TFSA_RRSP)
+        processor.process(txn_df=df, start_date=start_date, end_date=end_date, account_category=AccountCategory.TFSA_RRSP)
 
     assert any("Sell transaction found for symbol" in message for message in caplog.messages)
 
@@ -182,7 +182,7 @@ def test_capital_gain_processor_when_no_holding_before_trades_should_affect_cumu
     end_date = datetime(2024, 12, 31)
 
     # Process data
-    result = processor.process(df=df, start_date=start_date, end_date=end_date,
+    result = processor.process(txn_df=df, start_date=start_date, end_date=end_date,
                                account_category=AccountCategory.TFSA_RRSP)
 
     # Assert results
@@ -219,7 +219,7 @@ def test_capital_gain_processor_when_no_holding_after_trades_should_not_affect_c
     end_date = datetime(2024, 1, 2)
 
     # Process data
-    result = processor.process(df=df, start_date=start_date, end_date=end_date,
+    result = processor.process(txn_df=df, start_date=start_date, end_date=end_date,
                                account_category=AccountCategory.TFSA_RRSP)
 
     # Assert results
@@ -258,7 +258,7 @@ def test_capital_gain_processor_when_holding_should_affect_cap_gain():
     end_date = datetime(2024, 12, 31)
 
     # Process data
-    result = processor.process(df=df, start_date=start_date, end_date=end_date,
+    result = processor.process(txn_df=df, start_date=start_date, end_date=end_date,
                                account_category=AccountCategory.TFSA_RRSP)
 
     # Assert results

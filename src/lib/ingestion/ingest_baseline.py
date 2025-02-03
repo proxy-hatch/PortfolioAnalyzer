@@ -9,13 +9,13 @@ from lib.model.enum.account_name import AccountName
 from lib.logger.logger import get_logger
 
 
-
-def get_current_holdings(date: datetime.date,
-                         filepath: str,
-                         ) -> pd.DataFrame:
+def get_baseline_holdings(date: datetime.date,
+                          filepath: str,
+                          ) -> dict[AccountCategory, pd.DataFrame]:
     """
     Preprocess the baseline data for the given date.
 
+    :param filepath:
     :param date:
     :return:
     """

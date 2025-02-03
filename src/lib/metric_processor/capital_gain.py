@@ -10,13 +10,10 @@ from lib.model.position import Position
 
 from lib.model.enum.action import Action
 
-from lib.model.enum.account_category import AccountCategory
-
 
 class CapitalGainProcessor(BaseProcessor):
-    def __init__(self, holdings_df: pd.DataFrame):
+    def __init__(self):
         super().__init__()
-        self.holdings_df = holdings_df
 
     @dataclass
     class RealizedGainResult:
@@ -24,22 +21,28 @@ class CapitalGainProcessor(BaseProcessor):
         daily_realized: pd.DataFrame  # Date, Realized Gain, Realized Loss
         daily_realized_symbols: pd.DataFrame  # Date, Symbol, Realized (represented as a positive number for gain, negative for loss)
 
-    def process(self, df: pd.DataFrame,
+    def process(self, txn_df: pd.DataFrame,
                 start_date: pd.Timestamp,
                 end_date: pd.Timestamp,
+                # holdings_df: pd.DataFrame,
+                baseline_df: pd.DataFrame,
+                baseline_date: datetime.date
                 ) -> RealizedGainResult:
         """
         Process the DataFrame to calculate
         1. the total realized gain for the given date range.
         2. the daily realized gain and loss for each day in the date range.
 
-        :param df:
+        :param baseline_date:
+        :param baseline_df:
+        :param holdings_df:
+        :param txn_df:
         :param start_date:
         :param end_date:
         :return: RealizedGainData
         """
         positions: Dict[str, Position] = {}
-        for _, row in self.holdings_df.iterrows():
+        for _, row in baseline_df.iterrows():
             symbol = row['Symbol']
             positions[symbol] = Position(quantity=row['Quantity'], avg_price=row['AverageCost'])
 
@@ -51,9 +54,9 @@ class CapitalGainProcessor(BaseProcessor):
         daily_realized_symbols = pd.DataFrame(columns=['Date', 'Symbol', 'Realized'])
         daily_realized_symbols['Realized'] = daily_realized_symbols['Realized'].astype(float)
 
-        trades = df[df['Activity Type'] == 'Trades']
+        trades = txn_df[txn_df['Activity Type'] == 'Trades']
 
-        before_trades = trades[(trades['Date'] > self.holdings_date)
+        before_trades = trades[(trades['Date'] > baseline_date)
                                & (trades['Date'] < start_date)]
         during_trades = trades[(trades['Date'] >= start_date) & (trades['Date'] <= end_date)]
 
