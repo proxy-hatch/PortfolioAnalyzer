@@ -24,7 +24,7 @@ BASELINE_DATE = '2023-12-31'
 analysis_result: MetricsResult = None
 
 
-def create_dash_app(questrade_client: QuestradeInterface, baseline_df: pd.DataFrame, baseline_date: datetime) -> Dash:
+def create_dash_app(questrade_client: QuestradeInterface, baseline_dfs: dict[AccountCategory, pd.DataFrame], baseline_date: datetime) -> Dash:
     """
     Create a Dash app to display the analysis result.
 
@@ -71,20 +71,18 @@ def create_dash_app(questrade_client: QuestradeInterface, baseline_df: pd.DataFr
                     f"selected account: {selected_account}")
         account_category = AccountCategory.categorize(selected_account)
 
-        txn_start_date = (datetime.strptime(BASELINE_DATE, '%Y-%m-%d') + pd.DateOffset(days=1)).tz_localize(None).date()
         end_date = datetime.strptime(end_date, '%Y-%m-%d').date()
 
-        txn_df = questrade_client.get_account_activities(account_category=account_category,
-                                                         start_date=txn_start_date,
-                                                         end_date=end_date)
-        holdings_df = questrade_client.get_holdings(account_category=account_category)
+        txn_df = questrade_client.get_account_activities_by_account_category(account_category=account_category,
+                                                                             start_date=txn_start_date,
+                                                                             end_date=end_date)
 
         global analysis_result
         analysis_result = process_metrics(txn_df=txn_df,
                                           start_date=pd.to_datetime(start_date),
                                           end_date=pd.to_datetime(end_date),
-                                          holdings_df=holdings_df,
-                                          baseline_df=baseline_df,
+                                          # holdings_df=questrade_client.get_holdings(account_category=account_category),
+                                          baseline_df=baseline_dfs[account_category],
                                           baseline_date=baseline_date
                                           )
         logger.info(f"Analysis result updated.")

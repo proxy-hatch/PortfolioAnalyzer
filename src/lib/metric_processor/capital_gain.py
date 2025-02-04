@@ -21,7 +21,8 @@ class CapitalGainProcessor(BaseProcessor):
         daily_realized: pd.DataFrame  # Date, Realized Gain, Realized Loss
         daily_realized_symbols: pd.DataFrame  # Date, Symbol, Realized (represented as a positive number for gain, negative for loss)
 
-    def process(self, txn_df: pd.DataFrame,
+    def process(self,
+                txn_df: pd.DataFrame,
                 start_date: pd.Timestamp,
                 end_date: pd.Timestamp,
                 # holdings_df: pd.DataFrame,
@@ -35,7 +36,6 @@ class CapitalGainProcessor(BaseProcessor):
 
         :param baseline_date:
         :param baseline_df:
-        :param holdings_df:
         :param txn_df:
         :param start_date:
         :param end_date:

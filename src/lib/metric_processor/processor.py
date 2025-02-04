@@ -22,7 +22,7 @@ class MetricsResult:
 
 
 def process_metrics(txn_df: pd.DataFrame,
-                    holdings_df: pd.DataFrame,
+                    # holdings_df: pd.DataFrame,
                     start_date: datetime.date,
                     end_date: datetime.date,
                     baseline_df: pd.DataFrame,
@@ -31,8 +31,10 @@ def process_metrics(txn_df: pd.DataFrame,
     """
     Process the transaction data to calculate various metrics for the given date range.
 
+    :param baseline_date:
+    :param baseline_df:
     :param txn_df: DataFrame containing transaction data from baseline date to end date.
-    :param holdings_df: DataFrame containing latest holdings data.
+    # :param holdings_df: DataFrame containing latest holdings data.
     :param start_date: The start date for the metrics calculation.
     :param end_date: The end date for the metrics calculation.
     """
@@ -49,8 +51,11 @@ def process_metrics(txn_df: pd.DataFrame,
 
     account_data = txn_df
     for processor in processors:
-        processor_result = processor.process(txn_df=account_data, start_date=start_date, end_date=end_date,
-                                             holdings_df=holdings_df, baseline_df=baseline_df,
+        processor_result = processor.process(txn_df=account_data,
+                                             start_date=start_date,
+                                             end_date=end_date,
+                                             # holdings_df=holdings_df,
+                                             baseline_df=baseline_df,
                                              baseline_date=baseline_date)
         processor_result_dict = asdict(processor_result)
         if isinstance(processor, CapitalGainProcessor):

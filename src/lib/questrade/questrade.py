@@ -8,12 +8,13 @@ from lib.model.account_ids import ACCOUNT_NAME_ACCOUNT_ID_MAP
 from lib.model.enum.account_category import AccountCategory
 from lib.model.enum.account_name import AccountName
 
-REFRESH_TOKEN = 'ApnS9SC91BMppo1_hwUGsktx4v95KgkJ0'
+REFRESH_TOKEN = 'kMC7HoxCgKsMlsqbFJjQvnQGBNh0lg2O0'
 ACCESS_TOKEN_PATH = './access_token.yml'
 
 
 class QuestradeInterface:
     def __init__(self):
+        # self.client = Questrade(access_code=REFRESH_TOKEN)
         self.client = Questrade(token_yaml=ACCESS_TOKEN_PATH)
         self.client.refresh_access_token(from_yaml=True)
         self.logger = get_logger()
@@ -50,7 +51,43 @@ class QuestradeInterface:
         else:
             raise ValueError(f"Unsupported account category: {account_category}")
 
-    def get_account_activities(
+    def get_all_account_activities(
+            self, start_date: datetime.date, end_date: datetime.date
+    ) -> dict[AccountCategory, pd.DataFrame]:
+        """
+        Retrieve account activities for all accounts and return as a dictionary of DataFrames.
+
+        ### Columns in Returned DataFrame:
+        - **Date (datetime64[ns])**: The settlement date of the transaction.
+        - **Action (str)**: The type of action (e.g., 'Buy', 'Sell', 'DIV', 'WDR', 'TF6', etc.).
+        - **Symbol (str)**: The stock/ETF ticker symbol involved in the transaction.
+        - **Description (str)**: A textual description of the transaction.
+        - **Currency (str)**: The currency used for the transaction (e.g., 'USD', 'CAD').
+        - **Quantity (float)**: The number of shares involved in the transaction.
+        - **Price (float)**: The price per unit of the security.
+        - **Gross Amount (float)**: The total value of the transaction before commissions.
+        - **Commission (float)**: The fee charged for the transaction.
+        - **Net Amount (float)**: The total transaction value after deducting commissions.
+        - **Type (str)**: The category of transaction, e.g., 'Trades', 'Dividends', 'Transfers', etc.
+
+        :param start_date:
+        :param end_date:
+        :return:
+        Sample Output:
+                                Date Action Symbol                                                                                                          Description Currency  Quantity     Price  GrossAmount  Commission  NetAmount       Type
+        0 2024-12-04 00:00:00-05:00    Buy   AMZN                                                                                    AMAZON.COM INC  WE ACTED AS AGENT      USD        30  213.6006     -6408.02       -4.95   -6412.97     Trades
+        7 2024-12-11 00:00:00-05:00    Buy  BRK.B                                                                  BERKSHIRE HATHAWAY INC DEL  CL B  WE ACTED AS AGENT      USD        16  460.8900     -7374.24       -4.95   -7379.19     Trades
+        1 2024-12-12 00:00:00-05:00    DIV   MSFT                            MICROSOFT CORP  CASH DIV  ON      26 SHS  REC 11/21/24 PAY 12/12/24  NON-RES TAX WITHHELD      USD         0    0.0000         0.00        0.00      18.35  Dividends
+        2 2024-12-16 00:00:00-05:00    DIV   GOOG       ALPHABET INC  CLASS C CAPITAL STOCK  CASH DIV  ON      63 SHS  REC 12/09/24 PAY 12/16/24  NON-RES TAX WITHHELD      USD         0    0.0000         0.00        0.00      10.71  Dividends
+        5 2024-12-18 00:00:00-05:00    Buy    ETN                                             EATON CORPORATION PLC  WE ACTED AS AGENT  AVG PRICE - ASK US FOR DETAILS      USD        12  349.7100     -4196.52       -4.95   -4201.47     Trades
+        """
+        ret = {}
+        for account_category in AccountCategory:
+            ret[account_category] = self.get_account_activities_by_account_category(account_category, start_date, end_date)
+
+        return ret
+
+    def get_account_activities_by_account_category(
             self, account_category: AccountCategory, start_date: datetime.date, end_date: datetime.date
     ) -> pd.DataFrame:
         """
@@ -133,11 +170,18 @@ class QuestradeInterface:
         :param end_date: datetime.date - The end date of the date range.
         :return: pd.DataFrame - A structured DataFrame containing transactions for the given account and date range.
         """
+        self.logger.debug(f"Retrieving activities for {account} from {start_date.strftime('%Y-%m-%d')} to {end_date.strftime('%Y-%m-%d')}.")
+
+        # check types of start_date and end_date
+        start_date_str = start_date.strftime('%Y-%m-%d')
+        end_date_str = end_date.strftime('%Y-%m-%d')
+        self.logger.debug(f"start_date_str is {start_date_str}. type: {type(start_date_str)}")
+        self.logger.debug(f"start_date_str is {end_date_str}. type: {type(end_date_str)}")
 
         result = self.client.get_account_activities(
-            ACCOUNT_NAME_ACCOUNT_ID_MAP[account],
-            start_date.strftime('%Y-%m-%d'),
-            end_date.strftime('%Y-%m-%d')
+                ACCOUNT_NAME_ACCOUNT_ID_MAP[account],
+            start_date_str,
+            end_date_str
         )
 
         # Convert the result to a Pandas DataFrame

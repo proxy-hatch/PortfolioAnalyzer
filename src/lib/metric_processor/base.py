@@ -11,5 +11,6 @@ class BaseProcessor(ABC):
         self.logger = get_logger()
 
     @abstractmethod
-    def process(self, df: pd.DataFrame, start_date: pd.Timestamp, end_date: pd.Timestamp) -> Dict[str, float]:
+    def process(self, txn_df: pd.DataFrame,
+                start_date: pd.Timestamp, end_date: pd.Timestamp, *args, **kwargs) -> any:
         pass
