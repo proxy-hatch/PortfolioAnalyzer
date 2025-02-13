@@ -1,0 +1,12 @@
+{
+  "availability-zones:account=156041398701:region=us-west-2": [
+    "us-west-2a",
+    "us-west-2b",
+    "us-west-2c",
+    "us-west-2d"
+  ],
+  "hosted-zone:account=156041398701:domainName=api.shawnw.rocks:region=us-west-2": {
+    "Id": "/hostedzone/Z060734223SH62FK8GWEG",
+    "Name": "api.shawnw.rocks."
+  }
+}

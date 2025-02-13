@@ -1,4 +1,5 @@
 import logging
+import os
 from datetime import datetime
 from typing import Optional
 from lib.model.enum.stage import Stage
@@ -7,14 +8,12 @@ from lib.ingestion.ingest_baseline import ingest_baseline
 from lib.ingestion.ingest_transaction import ingest_transaction
 
 from lib.dash.dash import create_dash_app
+from lib.constant.constant import DEBUG, TXN_FILEPATH, BASELINE_DATE, STATEMENTS_FILEPATH
 
 logger: Optional[logging.Logger] = None
 
-TXN_FILEPATH = '../data/all_txns.csv'
-STATEMENTS_FILEPATH = '../data/statements'
-BASELINE_DATE = '2023-12-31'
-DEBUG = True
-
+# get stage from environment variable
+STAGE = os.getenv('STAGE', Stage.DEV)
 
 def main() -> None:
     logger.info("Begin analysis.")
@@ -27,9 +26,9 @@ def main() -> None:
     # results.to_csv('realized_gain_results.csv', index=False)
     # logger.info("Results saved to 'realized_gain_results.csv'.")
     app = create_dash_app(txn_df=txn_df, baseline_df=baseline_df, baseline_date=baseline_date)
-    app.run_server(debug=True)
+    app.run_server(host="0.0.0.0", port=8050, debug=DEBUG)
 
 
 if __name__ == "__main__":
-    logger = initialize_logger(Stage.DEV)
+    logger = initialize_logger(STAGE)
     main()

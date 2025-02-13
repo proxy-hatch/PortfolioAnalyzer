@@ -14,10 +14,6 @@ from lib.metric_processor.processor import MetricsResult
 
 from lib.logger.logger import get_logger
 
-TXN_FILEPATH = '../data/all_txns.csv'
-STATEMENTS_FILEPATH = '../data/statements'
-BASELINE_DATE = '2023-12-31'
-
 # Global variables to store analysis result
 analysis_result: Dict[AccountCategory, MetricsResult] = {}
 
