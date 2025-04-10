@@ -1,27 +1,22 @@
 import logging
 import os
 from datetime import datetime
-from typing import Optional
-
+from typing import Optional, Dict
 import pandas as pd
-
 from lib.model.enum.account_category import AccountCategory
 from lib.model.enum.account_name import AccountName
-
 from lib.logger.logger import get_logger
 
-
-def ingest_baseline(date: datetime.date,
-                    filepath: str,
-                    ) -> pd.DataFrame:
+def ingest_baseline(date: datetime.date, filepath: str) -> Dict[str, pd.DataFrame]:
     """
     Preprocess the baseline data for the given date.
 
-    :param date:
-    :return:
+    :param date: The date for which the baseline data is to be processed.
+    :param filepath: The directory path where the CSV files are located.
+    :return: A dictionary with account name as key and a pandas DataFrame as value.
     """
     logger = get_logger()
-    df_ret = pd.DataFrame()
+    result = {}
 
     for account_name in AccountName:
         path = f'{filepath}/{account_name.lower()}-{date.strftime("%Y%m%d")}.csv'
@@ -35,15 +30,6 @@ def ingest_baseline(date: datetime.date,
         else:
             df['Account Category'] = AccountCategory.MARGIN
 
-        df_ret = pd.concat([df_ret, df], ignore_index=True)
+        result[account_name.name] = df
 
-    # dedupe same symbol in TFSA and RRSP accounts
-    df_ret['TotalCost'] = df_ret['Quantity'] * df_ret['AverageCost']
-    df_merged = df_ret.groupby(['Symbol', 'Account Category'], as_index=False).agg({
-        'Quantity': 'sum',  # Sum the quantities
-        'TotalCost': 'sum'  # Sum the total costs
-    })
-    df_merged['AverageCost'] = df_merged['TotalCost'] / df_merged['Quantity']
-    df_merged = df_merged.drop(columns=['TotalCost'])
-
-    return df_merged
+    return result

@@ -10,9 +10,8 @@ from lib.dash.dash import create_dash_app
 
 logger: Optional[logging.Logger] = None
 
-TXN_FILEPATH = '../data/all_txns.csv'
 STATEMENTS_FILEPATH = '../data/statements'
-BASELINE_DATE = '2023-12-31'
+BASELINE_DATE = '2024-01-31'
 DEBUG = True
 
 
@@ -21,13 +20,12 @@ def main() -> None:
 
     baseline_date = datetime.strptime(BASELINE_DATE, '%Y-%m-%d')
     baseline_df = ingest_baseline(date=baseline_date, filepath=STATEMENTS_FILEPATH)
-    txn_df = ingest_transaction(TXN_FILEPATH)
+    # logger.debug("baseline_df: %s", baseline_df.to_string())
 
-    logger.info("Calculation completed.")
-    # results.to_csv('realized_gain_results.csv', index=False)
-    # logger.info("Results saved to 'realized_gain_results.csv'.")
-    app = create_dash_app(txn_df=txn_df, baseline_df=baseline_df, baseline_date=baseline_date)
-    app.run_server(debug=True)
+    for key, value in baseline_df.items():
+        logger.debug("key: %s, value: %s", key, value.to_string())
+
+    logger.debug("baseline_df type: %s", type(baseline_df))
 
 
 if __name__ == "__main__":
